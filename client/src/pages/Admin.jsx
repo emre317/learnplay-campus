@@ -1,92 +1,53 @@
-import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
-import api, { errMsg } from '../api/client.js';
+import { useCallback, useEffect, useState } from 'react';
+import { FiBookOpen, FiHelpCircle, FiStar, FiUsers } from 'react-icons/fi';
+import api from '../api/client.js';
+import ResourceManager from '../admin/ResourceManager.jsx';
+import UsersTable from '../admin/UsersTable.jsx';
+import { RESOURCES } from '../admin/schemas.js';
 
-const RESOURCES = [
-  { id: 'units', label: 'Üniteler', sample: { grade: 4, order: 1, title: 'Ünite adı', description: '', icon: '∑' } },
-  { id: 'topics', label: 'Konular', sample: { unit: '<ünite _id>', grade: 4, order: 1, title: 'Konu adı', slug: '4-konu-adi', summary: '## Başlık\n\nMetin ve $formül$', outcomes: [{ code: 'M.4.1.1.1', text: 'Kazanım' }], examples: [{ question: '', solution: '' }], worksheetUrl: '', video: { url: '', durationSec: 0, isPremium: true }, isPremium: false } },
-  { id: 'questions', label: 'Sorular', sample: [{ topic: '<konu _id>', grade: 4, outcome: 'M.4.1.1.1', difficulty: 'kolay', text: 'Soru metni', options: ['A', 'B', 'C', 'D'], correctIndex: 0, solution: 'Çözüm açıklaması', isPremium: false }] },
-  { id: 'games', label: 'Oyunlar', sample: { key: 'speed-multiply', title: 'Oyun adı', description: '', grades: [4], isPremium: true } },
+const TABS = [...RESOURCES.map((r) => ({ id: r.id, label: r.label })), { id: 'users', label: 'Kullanıcılar' }];
+const STATS = [
+  { key: 'users', label: 'Kullanıcı', icon: FiUsers, cls: 'bg-brand-soft text-brand' },
+  { key: 'premium', label: 'Premium üye', icon: FiStar, cls: 'bg-amber-400/15 text-amber-500' },
+  { key: 'topics', label: 'Konu', icon: FiBookOpen, cls: 'bg-plus/15 text-plus' },
+  { key: 'questions', label: 'Soru', icon: FiHelpCircle, cls: 'bg-divide/15 text-divide' },
 ];
 
 export default function Admin() {
   const [stats, setStats] = useState(null);
-  const [res, setRes] = useState(RESOURCES[0]);
-  const [items, setItems] = useState([]);
-  const [json, setJson] = useState('');
-  const [users, setUsers] = useState(null);
+  const [tab, setTab] = useState(TABS[0].id);
+  const loadStats = useCallback(() => { api.get('/admin/stats').then((r) => setStats(r.data)).catch(() => {}); }, []);
+  useEffect(() => { loadStats(); }, [loadStats]);
 
-  const load = () => {
-    api.get('/admin/stats').then((r) => setStats(r.data)).catch(() => {});
-    api.get(`/admin/${res.id}`).then((r) => setItems(r.data.items)).catch((e) => toast.error(errMsg(e)));
-  };
-  useEffect(() => { load(); setJson(JSON.stringify(res.sample, null, 2)); }, [res]); // eslint-disable-line
-
-  const save = async () => {
-    try {
-      const { data } = await api.post(`/admin/${res.id}`, JSON.parse(json));
-      toast.success(`${data.items.length} kayıt eklendi.`);
-      load();
-    } catch (e) { toast.error(e instanceof SyntaxError ? 'Geçersiz JSON' : errMsg(e)); }
-  };
-  const del = async (id) => {
-    if (!confirm('Silinsin mi?')) return;
-    await api.delete(`/admin/${res.id}/${id}`).catch((e) => toast.error(errMsg(e)));
-    load();
-  };
-  const loadUsers = () => api.get('/admin/users').then((r) => setUsers(r.data.items));
-  const setPlan = async (u, plan) => { await api.patch(`/admin/users/${u._id}/plan`, { plan, months: 12 }); loadUsers(); };
+  const schema = RESOURCES.find((r) => r.id === tab);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="text-3xl font-bold">Yönetim Paneli</h1>
-      {stats && (
-        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {[['Kullanıcı', stats.users], ['Premium', stats.premium], ['Konu', stats.topics], ['Soru', stats.questions]].map(([l, v]) => (
-            <div key={l} className="card p-5"><p className="font-mono text-3xl font-bold text-brand">{v}</p><p className="text-xs text-muted">{l}</p></div>
-          ))}
-        </div>
-      )}
-      <div className="mt-8 flex flex-wrap gap-2">
-        {RESOURCES.map((r) => (
-          <button key={r.id} onClick={() => { setUsers(null); setRes(r); }} className={`btn ${!users && res.id === r.id ? 'bg-brand text-white' : 'border border-line bg-surface'}`}>{r.label}</button>
+      <p className="text-muted">İçerikleri ve kullanıcıları buradan yönetin.</p>
+
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {STATS.map((s) => (
+          <div key={s.key} className="card flex items-center gap-4 p-5">
+            <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${s.cls}`}><s.icon size={18} /></span>
+            <div>
+              <p className="font-mono text-2xl font-bold">{stats ? stats[s.key] : '—'}</p>
+              <p className="text-xs text-muted">{s.label}</p>
+            </div>
+          </div>
         ))}
-        <button onClick={loadUsers} className={`btn ${users ? 'bg-brand text-white' : 'border border-line bg-surface'}`}>Kullanıcılar</button>
       </div>
 
-      {users ? (
-        <div className="card mt-6 divide-y divide-line">
-          {users.map((u) => (
-            <div key={u._id} className="flex flex-wrap items-center gap-3 p-4 text-sm">
-              <span className="flex-1 font-medium">{u.name} <span className="text-muted">· {u.email} · {u.role}</span></span>
-              <span className={`chip ${u.plan === 'premium' ? 'bg-amber-400/15 text-amber-500' : 'border border-line'}`}>{u.plan}</span>
-              <button className="btn-ghost py-1.5" onClick={() => setPlan(u, u.plan === 'premium' ? 'free' : 'premium')}>
-                {u.plan === 'premium' ? 'Ücretsize al' : 'Premium yap'}
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <div className="card p-5">
-            <h2 className="font-bold">Yeni {res.label} ekle <span className="text-xs font-normal text-muted">(JSON — tek kayıt ya da dizi ile toplu yükleme)</span></h2>
-            <textarea value={json} onChange={(e) => setJson(e.target.value)} spellCheck={false} className="input mt-3 h-80 font-mono text-xs" />
-            <button onClick={save} className="btn-primary mt-3">Kaydet</button>
-          </div>
-          <div className="card max-h-[32rem] divide-y divide-line overflow-y-auto">
-            {items.length === 0 && <p className="p-5 text-sm text-muted">Kayıt yok.</p>}
-            {items.map((it) => (
-              <div key={it._id} className="flex items-start gap-3 p-4 text-sm">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{it.title || it.text}</p>
-                  <p className="truncate font-mono text-xs text-muted">{it._id}{it.grade ? ` · ${it.grade}. sınıf` : ''}{it.difficulty ? ` · ${it.difficulty}` : ''}</p>
-                </div>
-                <button onClick={() => del(it._id)} className="text-xs font-semibold text-minus">Sil</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="mt-8 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line" role="tablist">
+        {TABS.map((t) => (
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+            className={`whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-semibold transition ${tab === t.id ? 'border-brand text-brand' : 'border-transparent text-muted hover:text-ink'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {schema ? <ResourceManager key={schema.id} schema={schema} onChanged={loadStats} /> : <UsersTable onChanged={loadStats} />}
     </div>
   );
 }

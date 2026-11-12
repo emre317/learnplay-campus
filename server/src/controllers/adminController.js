@@ -38,8 +38,20 @@ export async function update(req, res) {
 export async function remove(req, res) {
   const Model = getModel(req, res);
   if (!Model) return;
-  await Model.findByIdAndDelete(req.params.id);
-  res.json({ ok: true });
+  const { id } = req.params;
+  if (Model === Unit) {
+    const topicCount = await Topic.countDocuments({ unit: id });
+    if (topicCount) {
+      return res.status(409).json({ message: `Bu üniteye bağlı ${topicCount} konu var. Önce konuları silin ya da başka üniteye taşıyın.` });
+    }
+  }
+  let deletedQuestions = 0;
+  if (Model === Topic) {
+    // Konu silinince soruları sahipsiz kalmasın
+    deletedQuestions = (await Question.deleteMany({ topic: id })).deletedCount;
+  }
+  await Model.findByIdAndDelete(id);
+  res.json({ ok: true, deletedQuestions });
 }
 
 export async function stats(_req, res) {
