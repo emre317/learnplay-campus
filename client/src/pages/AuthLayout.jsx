@@ -12,7 +12,7 @@ export default function AuthLayout({ title, subtitle, children }) {
           <p className="font-mono text-6xl font-bold leading-tight">f(öğren) = <br />oyna + başar</p>
           <p className="mt-6 max-w-md text-white/80">4–8. sınıf öğrencileri için tamamen matematiğe odaklanmış öğrenme kampüsü.</p>
         </div>
-        <p className="relative font-mono text-xs text-white/60">e^(iπ) + 1 = 0</p>
+        <div aria-hidden="true" />
       </div>
       <div className="relative flex items-center justify-center p-6">
         <div className="lg:hidden"><MathBackground count={10} /></div>
