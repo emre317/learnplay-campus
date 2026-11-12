@@ -17,6 +17,8 @@ const userSchema = new mongoose.Schema(
     badges: [{ type: String }],
     // Veli paneli için: öğrenciye bağlı veli(ler)
     children: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    // Öğrencinin velisine verdiği bağlama kodu; veli yalnızca bu kodla öğrenciyi ekleyebilir
+    linkCode: { type: String, unique: true, sparse: true, select: false },
   },
   { timestamps: true }
 );
@@ -42,6 +44,7 @@ userSchema.set('toJSON', {
   virtuals: true,
   transform: (_doc, ret) => {
     delete ret.password;
+    delete ret.linkCode;
     delete ret.__v;
     return ret;
   },

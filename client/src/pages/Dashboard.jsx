@@ -5,6 +5,7 @@ import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import Spinner from '../components/Spinner.jsx';
 import GradeBadge from '../components/GradeBadge.jsx';
+import ParentCodeCard from '../components/ParentCodeCard.jsx';
 
 function Stat({ icon: Icon, label, value, color }) {
   return (
@@ -90,6 +91,7 @@ export default function Dashboard() {
         </section>
 
         <aside className="space-y-6">
+          {user.role === 'student' && <ParentCodeCard />}
           <div className="card p-5">
             <h2 className="font-bold">Tekrar etmen gerekenler</h2>
             {data.weakTopics.length === 0 ? (

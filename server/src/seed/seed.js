@@ -5,18 +5,23 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import { connectDB } from '../config/db.js';
-import { User, Unit, Topic, Question, Game, Attempt } from '../models/index.js';
+import { User, Unit, Topic, Question, Game, Attempt, StudyDay } from '../models/index.js';
+import { dayKey } from '../utils/parentReport.js';
 
 await connectDB(process.env.MONGO_URI);
-await Promise.all([Unit, Topic, Question, Game, Attempt].map((M) => M.deleteMany({})));
+await Promise.all([Unit, Topic, Question, Game, Attempt, StudyDay].map((M) => M.deleteMany({})));
 
 const admin = await User.findOne({ email: 'admin@learnplay.campus' });
 if (!admin) {
   await User.create({ name: 'Yönetici', email: 'admin@learnplay.campus', password: 'admin123', role: 'admin' });
 }
-const demo = await User.findOne({ email: 'ogrenci@learnplay.campus' });
+let demo = await User.findOne({ email: 'ogrenci@learnplay.campus' });
 if (!demo) {
-  await User.create({ name: 'Demo Öğrenci', email: 'ogrenci@learnplay.campus', password: 'ogrenci123', grade: 4 });
+  demo = await User.create({ name: 'Demo Öğrenci', email: 'ogrenci@learnplay.campus', password: 'ogrenci123', grade: 4 });
+}
+const parent = await User.findOne({ email: 'veli@learnplay.campus' });
+if (!parent) {
+  await User.create({ name: 'Demo Veli', email: 'veli@learnplay.campus', password: 'veli123', role: 'parent', children: [demo._id] });
 }
 
 const u1 = await Unit.create({ grade: 4, order: 1, title: 'Doğal Sayılar', icon: '123', description: 'Basamaklar, okuma-yazma, sıralama ve yuvarlama.' });
@@ -59,5 +64,27 @@ await Game.insertMany([
   { key: 'fraction-match', title: 'Kesir Eşleştir', description: 'Kesir ile modelini eşleştir.', grades: [4, 5, 6], isPremium: true },
 ]);
 
-console.log('✓ Örnek veriler yüklendi.\n  admin@learnplay.campus / admin123\n  ogrenci@learnplay.campus / ogrenci123');
+// Veli paneli için örnek çalışma geçmişi: [kaç gün önce, konu, puan, test süresi (sn), o günkü toplam çalışma (sn)]
+const history = [
+  [20, t3, 90, 600, 1500],
+  [9, t1, 60, 540, 1800],
+  [8, t2, 50, 420, 1200],
+  [6, t1, 80, 480, 2400],
+  [4, t2, 50, 400, 900],
+  [3, t1, 100, 450, 3000],
+  [1, t2, 70, 380, 2100],
+  [0, t2, 50, 360, 1500],
+];
+for (const [ago, topic, score, durationSec, studySec] of history) {
+  const at = new Date(Date.now() - ago * 86400000);
+  const correctCount = score / 10;
+  await Attempt.create({
+    user: demo._id, topic: topic._id, mode: 'test', answers: [],
+    correctCount, wrongCount: 10 - correctCount, emptyCount: 0,
+    score, durationSec, xpEarned: 0, createdAt: at, updatedAt: at,
+  });
+  await StudyDay.create({ user: demo._id, day: dayKey(at), seconds: studySec, lastPingAt: at });
+}
+
+console.log('✓ Örnek veriler yüklendi.\n  admin@learnplay.campus / admin123\n  ogrenci@learnplay.campus / ogrenci123\n  veli@learnplay.campus / veli123');
 await mongoose.disconnect();

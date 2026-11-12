@@ -5,10 +5,12 @@ import Spinner from '../components/Spinner.jsx';
 import PremiumLock from '../components/PremiumLock.jsx';
 import NotFound from './NotFound.jsx';
 import { GAMES } from '../games/index.js';
+import useStudyTimer from '../hooks/useStudyTimer.js';
 
 export default function GamePlay() {
   const { key } = useParams();
   const [game, setGame] = useState(undefined);
+  useStudyTimer();
   useEffect(() => {
     api.get('/games').then((r) => setGame(r.data.games.find((g) => g.key === key) || null)).catch(() => setGame(null));
   }, [key]);

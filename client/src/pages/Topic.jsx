@@ -5,6 +5,7 @@ import api from '../api/client.js';
 import Spinner from '../components/Spinner.jsx';
 import MathText from '../components/MathText.jsx';
 import PremiumLock from '../components/PremiumLock.jsx';
+import useStudyTimer from '../hooks/useStudyTimer.js';
 
 const tabs = [
   { id: 'foy', label: 'Konu Föyü', icon: FiFileText },
@@ -18,6 +19,7 @@ export default function Topic() {
   const [topic, setTopic] = useState(null);
   const [tab, setTab] = useState('foy');
   const [error, setError] = useState(false);
+  useStudyTimer();
 
   useEffect(() => {
     setTopic(null);

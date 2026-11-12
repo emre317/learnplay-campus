@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import Spinner from '../components/Spinner.jsx';
 import MathText from '../components/MathText.jsx';
 import PremiumLock from '../components/PremiumLock.jsx';
+import useStudyTimer from '../hooks/useStudyTimer.js';
 
 const SECONDS_PER_QUESTION = 90;
 const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -23,6 +24,7 @@ export default function Quiz() {
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
   const submitted = useRef(false);
+  useStudyTimer(!result);
 
   useEffect(() => {
     api.get(`/topics/${slug}/quiz`, { params: { size: timed ? 10 : 20 } })
