@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 248 248 252;
+    --surface: 255 255 255;
+    --line: 226 228 240;
+    --ink: 22 24 46;
+    --muted: 102 106 135;
+    --brand: 91 91 240;
+    --brand-soft: 236 236 255;
+    --grid: 91 91 240;
+  }
+  .dark {
+    --bg: 11 12 24;
+    --surface: 20 22 40;
+    --line: 42 45 72;
+    --ink: 236 237 250;
+    --muted: 150 154 190;
+    --brand: 129 132 255;
+    --brand-soft: 36 37 78;
+    --grid: 129 132 255;
+  }
+  html { @apply bg-bg text-ink antialiased; }
+  body { @apply min-h-screen font-sans bg-bg; }
+  h1, h2, h3, h4 { @apply font-display tracking-tight; }
+}
+
+@layer components {
+  .graph-paper {
+    background-image:
+      linear-gradient(rgb(var(--grid) / .07) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--grid) / .07) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .card { @apply rounded-2xl border border-line bg-surface shadow-card; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none; }
+  .btn-primary { @apply btn bg-brand text-white hover:brightness-110 shadow-glow; }
+  .btn-ghost { @apply btn border border-line bg-surface hover:bg-brand-soft; }
+  .input { @apply w-full rounded-xl border border-line bg-surface px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-brand/15; }
+  .label { @apply mb-1.5 block text-sm font-medium text-muted; }
+  .chip { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+  .gradient-text { @apply bg-gradient-to-r from-brand via-fuchsia-500 to-amber-400 bg-clip-text text-transparent; }
+  .prose-math h2 { @apply mt-6 mb-2 text-xl font-bold; }
+  .prose-math p { @apply my-3 leading-7; }
+  .prose-math ul { @apply my-3 list-disc pl-6; }
+  .prose-math strong { @apply text-brand; }
+}
